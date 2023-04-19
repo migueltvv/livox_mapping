@@ -2,14 +2,27 @@
 
   <arg name="rviz" default="true" />
 
-  <node pkg="livox_mapping" type="loam_scanRegistration" name="scanRegistration" output="screen">
-  </node>
+  <arg name="testarlego" default="false" />
+
+  <arg name="teste" default="false" />
+
+
+  <node pkg="livox_mapping" type="loam_scanRegistration" name="scanRegistration" output="screen"/>
+  
 
   <node pkg="livox_mapping" type="loam_laserMapping" name="laserMapping" output="screen">
-  <param name="map_file_path" type="string" value=" " />
+
+
+  <param name="map_file_path" type="string" value="/home/safe/Desktop" />
   <param name="filter_parameter_corner" type="double" value="0.1" />
   <param name="filter_parameter_surf" type="double" value="0.2" />
   </node>
+
+  <group if="$(arg testarlego)">
+    <node pkg="tf" type="static_transform_publisher" name="camera_init_to_map"  args="0 0 0 1.570795   0 1.570795 /map /camera_init 10" />
+    <node pkg="tf" type="static_transform_publisher" name="base_link_to_camera" args="0 0 0 -1.570795 -1.570795 0 /camera /base_link   10" />
+    <node pkg="tf" type="static_transform_publisher" name="velodyne_base_link" args="0 0 0 0 0 0 /base_link /velodyne 10" />
+  </group>
 
   <group if="$(arg rviz)">
     <node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz" args="-d $(find livox_mapping)/rviz_cfg/loam_livox.rviz" />

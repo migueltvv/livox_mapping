@@ -128,38 +128,38 @@ void laserCloudHandler_temp(const sensor_msgs::PointCloud2ConstPtr& laserCloudMs
     msg_window.push_back(laserCloudMsg);
   }
   else{
-    msg_window.erase(msg_window.begin());
+    msg_window.erase(msg_window.begin());// só mantém 2 mensagens, as mais recentes
     msg_window.push_back(laserCloudMsg);
   }
 
   for(int i = 0; i < msg_window.size();i++){
     pcl::PointCloud<PointType> temp;
-    pcl::fromROSMsg(*msg_window[i], temp);
-    *laserCloudIn += temp;
+    pcl::fromROSMsg(*msg_window[i], temp); // passa a RosMsg para pointcloud no objecto temp
+    *laserCloudIn += temp; // Depois passa para LaserCloudIn
   }
-  sensor_msgs::PointCloud2 laserCloudOutMsg;
-  pcl::toROSMsg(*laserCloudIn, laserCloudOutMsg);
-  laserCloudOutMsg.header.stamp = laserCloudMsg->header.stamp;
-  laserCloudOutMsg.header.frame_id = "/livox";
+  sensor_msgs::PointCloud2 laserCloudOutMsg; //Cria a mensagem laserCloudOutMsg
+  pcl::toROSMsg(*laserCloudIn, laserCloudOutMsg);//passa a point cloud para uma ROSMsg
+  laserCloudOutMsg.header.stamp = laserCloudMsg->header.stamp;//Header Stamp igual ao da outra mensagem
+  laserCloudOutMsg.header.frame_id = "/livox";// Header frame
   pubLaserCloud_temp.publish(laserCloudOutMsg);
 
 }
 void laserCloudHandler(const sensor_msgs::PointCloud2ConstPtr& laserCloudMsg)
 {
   pcl::PointCloud<PointType> laserCloudIn;
-  pcl::fromROSMsg(*laserCloudMsg, laserCloudIn);
+  pcl::fromROSMsg(*laserCloudMsg, laserCloudIn); //Passa p o objeto laserCloudIn
 
-  int cloudSize = laserCloudIn.points.size();
+  int cloudSize = laserCloudIn.points.size(); // vê tamanho, points vem no "PointType"
 
-  if(cloudSize > 32000) cloudSize = 32000;
+  if(cloudSize > 32000) cloudSize = 32000; //limita
   
   int count = cloudSize;
   PointType point;
-  pcl::PointCloud<PointType> Allpoints;
+  pcl::PointCloud<PointType> Allpoints; //PointType está definido como XYZI
 
   for (int i = 0; i < cloudSize; i++) {
 
-    point.x = laserCloudIn.points[i].x;
+    point.x = laserCloudIn.points[i].x; // Point structure 3D, guardados no ponto (points) i da pointcloud
     point.y = laserCloudIn.points[i].y;
     point.z = laserCloudIn.points[i].z;
     double theta = std::atan2(laserCloudIn.points[i].y,laserCloudIn.points[i].z) / M_PI * 180 + 180;

@@ -2,9 +2,11 @@
 
   <arg name="rviz" default="true" />
 
-  <arg name="testarlego" default="false" />
+  <arg name="choupal" default="false" />
 
-  <arg name="teste" default="false" />
+  <arg name="testarlego" default="false" />
+  
+  <arg name="model" default="$(find traversability_mapping)/urdf/sensor_box.urdf"/>
 
 
   <node pkg="livox_mapping" type="loam_scanRegistration" name="scanRegistration" output="screen"/>
@@ -18,6 +20,67 @@
   <param name="filter_parameter_surf" type="double" value="0.2" />
   </node>
 
+
+
+  <group if="$(arg choupal)">
+
+        <node pkg="tf" type="static_transform_publisher" name="aft_to_base_link"  args="0 0 0 0   0 0 /aft_mapped /base_link 10" />
+
+    	<param name="robot_description" textfile="$(arg model)" />
+	<node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
+            <remap from="joint_state" to="joint_state"/>
+            <param name="publish_frequency" type="double" value="15.0"/>
+    	</node>
+
+<!--Image transports-->
+    <node pkg="image_transport" 
+		  type="republish" 
+		  name="realsense_rgb" 
+		  args="compressed in:=/realsense/color/image_raw
+		  		raw out:=/realsense/color/image_raw"/> 
+	
+    <node pkg="image_transport" 
+		  type="republish" 
+		  name="realsense_depth" 
+		  args="compressedDepth in:=/realsense/aligned_depth_to_color/image_raw
+		        raw out:=/realsense/aligned_depth_to_color/image_raw"/>
+
+	<node pkg="image_transport" 
+	  type="republish" 
+	  name="mynteye_left" 
+	  args="compressed in:=mynteye/left_rect/image_rect
+	  		raw out:=mynteye/left_rect/image_rect"/> 
+	
+	<node pkg="image_transport" 
+	  type="republish" 
+	  name="mynteye_right" 
+	  args="compressed in:=mynteye/right_rect/image_rect
+	  		raw out:=mynteye/right_rect/image_rect"/> 
+
+
+	<!-- Generate Realsense's Point Cloud from Depth-->
+	<node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager" />
+  	<node pkg="nodelet" type="nodelet" name="realsense_depth2cloud"
+  	      args="load depth_image_proc/point_cloud_xyzrgb nodelet_manager">
+  	  <remap from="rgb/camera_info" to="/realsense/color/camera_info"/>
+  	  <remap from="rgb/image_rect_color" to="/realsense/color/image_raw"/>
+
+	  <remap from="depth_registered/image_rect" to="/realsense/aligned_depth_to_color/image_raw"/>
+  	  <remap from="depth_registered/points" to="/realsense/depth/points"/>
+  	</node>
+	
+	<!-- Generate Mynteye's Point Cloud from Depth-->
+	<node pkg="nodelet" type="nodelet" name="mynt_depth2cloud"
+  	      args="load depth_image_proc/point_cloud_xyz nodelet_manager">
+  	  <remap from="camera_info" to="/mynteye/depth/camera_info"/>
+  	  <remap from="image_rect" to="/mynteye/depth/image_raw"/>
+  	  <remap from="points" to="/mynteye/depth/points"/>
+  	</node>
+</group>
+   
+
+  	
+
   <group if="$(arg testarlego)">
     <node pkg="tf" type="static_transform_publisher" name="camera_init_to_map"  args="0 0 0 1.570795   0 1.570795 /map /camera_init 10" />
     <node pkg="tf" type="static_transform_publisher" name="base_link_to_camera" args="0 0 0 -1.570795 -1.570795 0 /camera /base_link   10" />
@@ -29,3 +92,7 @@
   </group>
 
 </launch>
+
+
+
+ 

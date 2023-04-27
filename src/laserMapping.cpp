@@ -390,7 +390,7 @@ int main(int argc, char** argv)
             ("/laser_cloud_flat", 100, laserCloudSurfLastHandler);
 
     ros::Subscriber subLaserCloudFullRes = nh.subscribe<sensor_msgs::PointCloud2>
-            ("/livox_cloud", 100, laserCloudFullResHandler);
+            ("/velodyne_cloud", 100, laserCloudFullResHandler);
 
     ros::Publisher pubLaserCloudSurround = nh.advertise<sensor_msgs::PointCloud2>
             ("/laser_cloud_surround", 100);
@@ -398,12 +398,12 @@ int main(int argc, char** argv)
             ("/laser_cloud_surround_corner", 100);
 
     ros::Publisher pubLaserCloudFullRes = nh.advertise<sensor_msgs::PointCloud2>
-            ("/velodyne_cloud_registered", 100);
+            ("/full_cloud_info", 100);
 
     ros::Publisher pubOdomAftMapped = nh.advertise<nav_msgs::Odometry> ("/aft_mapped_to_init", 1);
     nav_msgs::Odometry odomAftMapped;
-    odomAftMapped.header.frame_id = "/camera_init";
-    odomAftMapped.child_frame_id = "/aft_mapped";
+    odomAftMapped.header.frame_id = "/map";
+    odomAftMapped.child_frame_id = "/base_link";
 
     std::string map_file_path;
     ros::param::get("~map_file_path",map_file_path);
@@ -1141,7 +1141,7 @@ int main(int argc, char** argv)
             sensor_msgs::PointCloud2 laserCloudFullRes3;
             pcl::toROSMsg(*laserCloudFullResColor, laserCloudFullRes3);
             laserCloudFullRes3.header.stamp = ros::Time().fromSec(timeLaserCloudCornerLast);
-            laserCloudFullRes3.header.frame_id = "/camera_init";
+            laserCloudFullRes3.header.frame_id = "/map";
             pubLaserCloudFullRes.publish(laserCloudFullRes3);
 
             *laserCloudFullResColor_pcd += *laserCloudFullResColor;
@@ -1171,7 +1171,7 @@ int main(int argc, char** argv)
             q.setY( odomAftMapped.pose.pose.orientation.y );
             q.setZ( odomAftMapped.pose.pose.orientation.z );
             transform.setRotation( q );
-            br.sendTransform( tf::StampedTransform( transform, odomAftMapped.header.stamp, "/camera_init", "/aft_mapped" ) );
+            br.sendTransform( tf::StampedTransform( transform, odomAftMapped.header.stamp, "/map", "/base_link" ) );
 
             kfNum++;
 

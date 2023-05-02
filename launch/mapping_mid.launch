@@ -19,13 +19,13 @@
   <param name="filter_parameter_corner" type="double" value="0.1" />
   <param name="filter_parameter_surf" type="double" value="0.2" />
   </node>
+  
 
-
-
+  <node pkg="message_to_tf" type="message_to_tf" name="odom_to_tf" args="/aft_mapped_to_init"/>
   <group if="$(arg choupal)">
-
+	
         <node pkg="tf" type="static_transform_publisher" name="aft_to_base_link"  args="0 0 0 0   0 0 /aft_mapped /base_link 10" />
-
+	
     	<param name="robot_description" textfile="$(arg model)" />
 	<node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
             <remap from="joint_state" to="joint_state"/>

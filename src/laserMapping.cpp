@@ -101,6 +101,7 @@ pcl::PointCloud<PointType>::Ptr laserCloudFullRes(new pcl::PointCloud<PointType>
 pcl::PointCloud<PointType>::Ptr laserCloudFullRes2(new pcl::PointCloud<PointType>());
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr laserCloudFullResColor(new pcl::PointCloud<pcl::PointXYZRGB>());
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr laserCloudFullResColor_pcd(new pcl::PointCloud<pcl::PointXYZRGB>());
+pcl::PointCloud<PointType>::Ptr laserCloudFullResMap(new pcl::PointCloud<PointType>()); //meu, para ir p full_cloud_info
 
 
 pcl::PointCloud<PointType>::Ptr laserCloudCornerArray[laserCloudNum];
@@ -373,7 +374,8 @@ void laserCloudFullResHandler(const sensor_msgs::PointCloud2ConstPtr& laserCloud
 
     laserCloudFullRes->clear();
     laserCloudFullResColor->clear();
-    pcl::fromROSMsg(*laserCloudFullRes2, *laserCloudFullRes);
+    laserCloudFullResMap->clear(); // minha
+    pcl::fromROSMsg(*laserCloudFullRes2, *laserCloudFullRes); //De uma pcl2 para um pcl
 
     newLaserCloudFullRes = true;
 }
@@ -399,6 +401,9 @@ int main(int argc, char** argv)
 
     ros::Publisher pubLaserCloudFullRes = nh.advertise<sensor_msgs::PointCloud2>
             ("/full_cloud_info", 100);
+
+    ros::Publisher pubLaserCloudFullResMap = nh.advertise<sensor_msgs::PointCloud2>
+            ("/full_cloud_info_map",100);
 
     ros::Publisher pubOdomAftMapped = nh.advertise<nav_msgs::Odometry> ("/aft_mapped_to_init", 1);
     nav_msgs::Odometry odomAftMapped;
@@ -1138,13 +1143,33 @@ int main(int argc, char** argv)
                 laserCloudFullResColor->push_back(temp_point);
             }
 
+
+
             sensor_msgs::PointCloud2 laserCloudFullRes3;
-            pcl::toROSMsg(*laserCloudFullResColor, laserCloudFullRes3);
+            pcl::toROSMsg(*laserCloudFullResColor, laserCloudFullRes3); // passa a cor para a lasercloud3
             laserCloudFullRes3.header.stamp = ros::Time().fromSec(timeLaserCloudCornerLast);
             laserCloudFullRes3.header.frame_id = "/map";
             pubLaserCloudFullRes.publish(laserCloudFullRes3);
 
             *laserCloudFullResColor_pcd += *laserCloudFullResColor;
+
+
+           //MINHA FUNÇÃO
+            // int laserCloudFullResNum = laserCloudFullRes2->points.size(); //MEU
+            for (int i = 0; i < laserCloudFullResNum; i++) {
+
+                pcl::PointXYZI temp_point2;
+                pointAssociateToMap(&laserCloudFullRes2->points[i], &temp_point2);
+                laserCloudFullResMap->push_back(temp_point2);
+            }
+
+            sensor_msgs::PointCloud2 laserCloudFullRes4;
+            pcl::toROSMsg(*laserCloudFullResMap, laserCloudFullRes4); // pontos mapeados
+            laserCloudFullRes4.header.stamp = ros::Time().fromSec(timeLaserCloudCornerLast);
+            laserCloudFullRes4.header.frame_id = "/map";
+            pubLaserCloudFullResMap.publish(laserCloudFullRes4);
+
+
 
             geometry_msgs::Quaternion geoQuat = tf::createQuaternionMsgFromRollPitchYaw
                     (transformAftMapped[2], - transformAftMapped[0], - transformAftMapped[1]);
